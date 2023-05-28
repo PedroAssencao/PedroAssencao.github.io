@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Exemplo de uso da OMDB API</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+  <style>
+    body {
+      background: black;
+    }
+
+    #carouselExampleControls {
+      margin-top: 70px;
+    }
+
+    .carousel-img {
+      max-height: 350px;
+      object-fit: contain;
+      border-radius: 30px; 
+    }
+
+    .carousel-caption {
+      display: none;
+    }
+
+    .carousel-control-container {
+      margin: 70px 0px;
+    }
+  </style>
+</head>
+<body>
+
+  <!--navbar Start-->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="index.html">*Insira Nome*</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link" href="#">Filmes</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Séries</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Animes</a>
+          </li>
+        </ul>
+        <form id="searchBar" class="d-flex" onsubmit="searchMedia(); return false;">
+          <input class="form-control me-2" type="search" id="searchInput" placeholder="Digite o Nome do título" aria-label="Search">
+          <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+        </form>
+      
+      </div>
+    </div>
+  </nav>
+  <!--navbar End-->
+
+  <!--carrossel-filmes start-->
+
+
+  <div id="carouselFilmes" class="carousel slide mt-5 p-5" data-bs-ride="carousel">
+    <div class="d-flex align-items-center">
+      <h4 class="mr-3 "><span class="badge badge-secondary">Assistir Filmes Online</span></h4>
+  
+      <button type="button" class="btn btn-outline-primary m-3 rounded-bottom">Lançamentos</button>
+      <button type="button" class="btn btn-outline-secondary  m-3 rounded-bottom">Novos Filmes</button>
+      <button type="button" class="btn btn-outline-success  m-3 rounded-bottom">Populares</button>
+    </div>
+  
+    <div class="carousel-inner" id="filmesList"></div>
+    
+    <div class="carousel-control-container">
+      <button class="carousel-control-prev" type="button" data-bs-target="#carouselFilmes" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselFilmes" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+      </button>
+    </div>
+  </div>
+  
+  <!--carrossel-filmes end-->
+
+  <!--carrossel-Séries start-->
+  <div id="carouselSeries" class="carousel slide mt-5 p-5" data-bs-ride="carousel">
+    <div class="d-flex align-items-center">
+      <h4 class="mr-3 "><span class="badge badge-secondary">Assistir Séries & Animes Online</span></h4>
+  
+      <button type="button" class="btn btn-outline-primary m-3">Primary</button>
+      <button type="button" class="btn btn-outline-secondary  m-3">Secondary</button>
+      <button type="button" class="btn btn-outline-success  m-3">Success</button>
+    </div>
+    <div class="carousel-inner" id="seriesList"></div>
+    <div class="carousel-control-container">
+      <button class="carousel-control-prev" type="button" data-bs-target="#carouselSeries" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselSeries" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+      </button>
+    </div>
+  </div>
+  <!--carrossel-Séries end-->
+
+
+
+  <div id="embedWarezCdn"></div>
+
+  <script>
+    const apiKey = '224f1e56';
+    let currentPage = 1;
+    let currentSearchInput = '';
+    let currentImdbId = '';
+  
+
+    window.addEventListener('DOMContentLoaded', function() {
+      const searchBar = document.getElementById('searchInput');
+      const randomNames = [
+  'Dragon Ball',
+  'Harry Potter',
+  'Friends',
+  'Avengers',
+  'Stranger Things',
+  'Breaking Bad',
+  'The Lord of the Rings',
+  'Naruto',
+  'Game of Thrones',
+  'The Matrix',
+  'One Piece',
+  'The Walking Dead',
+  'Star Wars',
+  'Attack on Titan',
+  'Sherlock',
+  'Pulp Fiction',
+  'Death Note',
+  'The Simpsons',
+  'Inception',
+  'The Office',
+  'Fight Club',
+  'Black Mirror',
+  'Batman Begins',
+  'Fullmetal Alchemist',
+  'The Big Bang Theory',
+  'Interstellar',
+  'Dexter',
+  'The Dark Knight',
+  'Stranger Things',
+  'F.R.I.E.N.D.S',
+  'The Shawshank Redemption',
+  'Spirited Away',
+  'Prison Break',
+  'The Avengers',
+  'The Witcher',
+  'Forrest Gump',
+  'The Godfather',
+  'Doctor Who',
+  'The Lion King',
+  'The X-Files',
+  'Toy Story',
+  'Westworld',
+  'The Great Gatsby',
+  'Ghost in the Shell',
+  'La Casa de Papel (Money Heist)',
+  'Gladiator',
+  'Lost',
+  'The Hobbit',
+  'Akira',
+  'Stranger Things',
+  'How I Met Your Mother',
+  'The Prestige',
+  'Avatar: The Last Airbender',
+  'Scarface',
+  'Friends',
+  'Django Unchained',
+  'Family Guy',
+  'The Silence of the Lambs',
+  'Black Panther',
+  'Daredevil',
+  'The Social Network',
+  'The Witcher',
+  'The Shining',
+  'Vikings',
+  'Inglourious Basterds',
+  'Supernatural',
+  'Whiplash',
+  'Death Note',
+  'House of Cards',
+  'The Dark Knight Rises',
+  'Rick and Morty',
+  'Inception',
+  'True Detective',
+  'Shrek',
+  'The Wire',
+  'The Green Mile',
+  'Attack on Titan',
+  'House M.D.',
+  'The Revenant',
+  'The Sopranos',
+  'Joker',
+  'Stranger Things',
+  'Memento',
+  'Gravity',
+  'The Flash',
+  'The Matrix',
+  'Firefly',
+  'American Psycho',
+  'Tokyo Ghoul',
+  'The Office',
+  'Jurassic Park',
+  'Doctor Strange',
+  'Prison Break',
+  'The Godfather',
+  'Black Mirror',
+  'Harry Potter',
+  'The Simpsons',
+  'Sherlock',
+  'Pulp Fiction',
+  'Game of Thrones',
+  'Dragon Ball',
+  'Fullmetal Alchemist',
+  'One Piece'
+];
+      const randomIndex = Math.floor(Math.random() * randomNames.length);
+      searchBar.value = randomNames[randomIndex];
+      searchMedia(); 
+    });
+
+    function searchMedia() {
+      console.log('Realizando a pesquisa:', document.getElementById('searchInput').value);
+    }
+
+
+    function loadMediaList() {
+      axios.get('https://www.omdbapi.com/', {
+        params: {
+          apikey: apiKey,
+          s: currentSearchInput,
+          page: currentPage
+        }
+      })
+      .then(function(response) {
+        if (response.data.Response === 'True' && response.data.Search.length > 0) {
+          const mediaList = response.data.Search;
+          console.log('Mídias encontradas:', mediaList);
+          displayMediaList(mediaList);
+        } else {
+          console.log('Nenhuma mídia encontrada');
+        }
+      })
+      .catch(function(error) {
+        console.error('Ocorreu um erro:', error);
+      });
+    }
+  
+    function searchMedia() {
+      currentPage = 1;
+      currentSearchInput = document.getElementById('searchInput').value;
+      loadMediaList();
+    }
+  
+    function displayMediaList(mediaList) {
+      const filmesListContainer = document.getElementById('filmesList');
+      const seriesListContainer = document.getElementById('seriesList');
+      
+  
+      filmesListContainer.innerHTML = '';
+      seriesListContainer.innerHTML = '';
+      
+  
+      let slideIndexFilmes = 0;
+      let slideIndexSeries = 0;
+      let slideIndexAnimes = 0;
+  
+      for (let i = 0; i < mediaList.length; i += 5) {
+        const mediaGroup = mediaList.slice(i, i + 5);
+  
+        const carouselItem = document.createElement('div');
+        carouselItem.classList.add('carousel-item');
+  
+        const row = document.createElement('div');
+        row.classList.add('row');
+  
+        mediaGroup.forEach(function(media) {
+          if (media.Poster && media.Title && media.Type && media.Year && media.imdbID && media.Poster !== 'N/A') {
+            axios.get('https://www.omdbapi.com/', {
+              params: {
+                apikey: apiKey,
+                i: media.imdbID,
+                plot: 'short'
+              }
+            })
+            .then(function(response) {
+              if (response.data.imdbRating && response.data.imdbRating >= 1.0) {
+                const col = document.createElement('div');
+                col.classList.add('col');
+  
+                const mediaItem = document.createElement('div');
+                mediaItem.classList.add('carousel-media');
+  
+                const mediaImage = document.createElement('img');
+                mediaImage.classList.add('d-block');
+                mediaImage.classList.add('w-100');
+                mediaImage.classList.add('carousel-img');
+                mediaImage.src = media.Poster;
+  
+                mediaItem.appendChild(mediaImage);
+                col.appendChild(mediaItem);
+                row.appendChild(col);
+  
+                mediaItem.addEventListener('click', function() {
+                  displayPlayer(media.imdbID, media.Type);
+                });
+              }
+            })
+            .catch(function(error) {
+              console.error('Ocorreu um erro ao obter a nota:', error);
+            });
+          }
+        });
+  
+        if (mediaGroup.length > 0) {
+          if (mediaGroup[0].Type === 'movie') {
+            if (slideIndexFilmes === 0) {
+              carouselItem.classList.add('active');
+            }
+            filmesListContainer.appendChild(carouselItem);
+            carouselItem.appendChild(row);
+            slideIndexFilmes++;
+          } else if (mediaGroup[0].Type === 'series') {
+            if (slideIndexSeries === 0) {
+              carouselItem.classList.add('active');
+            }
+            seriesListContainer.appendChild(carouselItem);
+            carouselItem.appendChild(row);
+            slideIndexSeries++;
+          } else if (mediaGroup[0].Type === 'anime') {
+            if (slideIndexAnimes === 0) {
+              carouselItem.classList.add('active');
+            }
+            animesListContainer.appendChild(carouselItem);
+            carouselItem.appendChild(row);
+            slideIndexAnimes++;
+          }
+        }
+      }
+    }
+
+    function displayPlayer(imdbId, type) {
+  var imdb = imdbId;
+
+  if (type === 'movie') {
+    var filme = 'filme';
+    window.open('https://embed.warezcdn.com/' + filme + '/' + imdb);
+  } else if (type === 'series') {
+    var series = 'serie'
+    var season = '1';
+    var episode = '1';
+    window.open('https://embed.warezcdn.com/' + series + '/' + imdb + '/' + season + '/' + episode);
+  }
+}
+  
+    loadMediaList();
+  </script>
+</body>
+</html>
